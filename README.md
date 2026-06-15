@@ -1,5 +1,9 @@
 # ffreis-platform-awsfakes
 
+<!-- ffreis-badges:start -->
+[![CI](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/FelipeFuhr/ffreis-badges/main/badges/ffreis-platform-awsfakes/ci.json)](https://github.com/FelipeFuhr/ffreis-platform-awsfakes/actions)
+<!-- ffreis-badges:end -->
+
 Lightweight AWS SDK v2 middleware for testing. Plugs into any SDK v2 client
 (S3, DynamoDB, IAM, STS, …) to:
 
