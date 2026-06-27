@@ -1,0 +1,49 @@
+name: DevOps / Security
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main, master]
+  schedule:
+    - cron: "7 18 2 * *"  # monthly scattered
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  security-fs:
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-security-fs.yml@3858e9e74c805067e454740b195372c7195f333b # v1.5.0
+    with:
+      working-directory: "."
+      scan-history: true
+      upload-sarif: false
+
+  codeql:
+    if: ${{ github.event_name != 'pull_request' }}
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-codeql.yml@3858e9e74c805067e454740b195372c7195f333b # v1.5.0
+    with:
+      languages: "go"
+      source-root: "."
+
+  osv:
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-osv-scanner.yml@3858e9e74c805067e454740b195372c7195f333b # v1.5.0
+    with:
+      working-directory: "."
+      upload-sarif: false
