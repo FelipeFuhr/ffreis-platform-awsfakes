@@ -94,7 +94,9 @@ appending to `aws.Config.APIOptions`.
 ## Tests
 
 ```bash
-make test
+make test           # -race -shuffle=on
+make coverage-gate  # fails below 75% coverage (measures ~93.6%)
+make mutation       # gremlins mutation testing (slow — CI only)
 ```
 
-Runs with `-race -shuffle=on` per the workspace invariant.
+`make test` runs with `-race -shuffle=on` per the workspace invariant.
