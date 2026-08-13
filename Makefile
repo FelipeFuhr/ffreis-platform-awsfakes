@@ -12,11 +12,22 @@ MUTATION_THRESHOLD ?= 60
 # vacuously) for "./..." or "./awsfakes/...". Verified locally: "./awsfakes"
 # finds 9 runnable mutants; "./..." and "./awsfakes/..." find none.
 MUTATION_PACKAGES  ?= ./awsfakes
+FUZZ_PACKAGES      ?= ./...
+FUZZ_TIME          ?= 30s
 
-.PHONY: help test lint tidy fmt fmt-check coverage coverage-gate integration-coverage-gate mutation
+.PHONY: help build-all test lint tidy fmt fmt-check coverage coverage-gate integration-coverage-gate mutation fuzz secrets-scan-staged
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+build-all: ## Build all packages required by the lefthook release tier
+	$(GO) build ./...
+
+fuzz: ## Run all Fuzz* targets for FUZZ_TIME each (no-op when none exist)
+	@for pkg in $$($(GO) list $(FUZZ_PACKAGES)); do targets=$$($(GO) test -list 'Fuzz.*' "$$pkg" 2>/dev/null | grep '^Fuzz' || true); for target in $$targets; do $(GO) test -run='^$$' -fuzz="^$${target}$$" -fuzztime="$(FUZZ_TIME)" "$$pkg"; done; done
+
+secrets-scan-staged: ## Scan staged changes for credentials
+	gitleaks protect --staged --redact
 
 test: ## Run tests with race + shuffle
 	$(GO) test -race -shuffle=on ./...
