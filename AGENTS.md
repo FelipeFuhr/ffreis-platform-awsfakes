@@ -46,6 +46,28 @@ go.mod
 make test    # -race -shuffle=on
 ```
 
+## Quality gates (coverage + mutation)
+
+- `make coverage-gate` — fails below `COVERAGE_THRESHOLD` (75; current
+  measured coverage is ~93.6%). Wired into CI via `go-coverage.yml`.
+- `make integration-coverage-gate` — no-op (prints and exits 0) because this
+  repo has no `//go:build integration` files. Correct for a testing library:
+  its "integration" surface (a real SDK client + smithy middleware stack) is
+  already exercised by the ordinary unit tests in `awsfakes_test.go`, so a
+  separate integration suite would just duplicate them. Wired into CI via
+  `go-integration-coverage.yml`, which itself no-ops when zero
+  integration-tagged files exist — don't fabricate one just to fill the slot.
+- `make mutation` — gremlins, `MUTATION_PACKAGES ?= ./awsfakes` (**a plain
+  directory, not `./awsfakes/...`** — gremlins doesn't understand the Go
+  `/...` wildcard suffix and silently reports "No results to report" for it,
+  which reads as a vacuous pass, not a scan-tool error).
+- **awk numeric-compare gotcha**: the `coverage-gate`/`integration-coverage-gate`
+  awk needs `cov = $3 + 0` before comparing to the threshold. `gsub()` on a
+  field clears gawk's STRNUM flag, so a bare `$3 < threshold` after `gsub`
+  becomes a STRING comparison — `"93.6" < "100"` is true lexically (since
+  `'9' > '1'`), so the gate silently never fails. Verified by running the gate
+  at `COVERAGE_THRESHOLD=100` before and after the `+ 0` fix.
+
 ## Public repo — private-repo hygiene
 
 This is a public GitHub repository. Never name private repos in commit
